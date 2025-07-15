@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>8x25 to 12x22 Scaler & Code Generator</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { border-collapse: collapse; margin: 10px 0; }
+    td { width: 20px; height: 20px; border: 1px solid #ddd; }
+    .r { background: red; }
+    .g { background: green; }
+    .b { background: blue; }
+    .rgb { background: magenta; }
+    textarea { width: 100%; height: 200px; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>8x25 to 12x22 Converter</h1>
+
+  <h2>Paste Your a8x25 Assignments</h2>
+  <textarea id="assignments">// Example: a8x25[2][0][0] = 255;</textarea>
+  <br />
+  <button onclick="runAssignments()">Run Assignments</button>
+
+  <h2>8x25 Grid</h2>
+  <div id="grid8x25"></div>
+
+  <h2>12x22 Grid (Scaled)</h2>
+  <div id="grid12x22"></div>
+
+  <h2>Converted Code</h2>
+  <textarea id="outputCode"></textarea>
+  <br />
+  <button onclick="convertAndShow()">Convert & Show</button>
+  <button onclick="copyCode()">Copy Code</button>
+
+  <script>
+  let a8x25 = Array.from({ length: 8 }, () =>
+    Array.from({ length: 25 }, () => [0, 0, 0])
+  );
+
+  function runAssignments() {
+    // Clear previous
+    for (let i = 0; i < 8; i++)
+      for (let j = 0; j < 25; j++)
+        for (let k = 0; k < 3; k++)
+          a8x25[i][j][k] = 0;
+
+    // Get code from textarea
+    const code = document.getElementById('assignments').value;
+
+    try {
+      eval(code); // run the pasted assignments
+      alert('Assignments loaded!');
+    } catch (err) {
+      alert('Error in your code:\n' + err);
+    }
+
+    // Render 8x25 grid
+    renderGrid(a8x25, 8, 25, 'grid8x25');
+
+    // ✅ Auto run convert & show right after
+    convertAndShow();
+  }
+
+  function scale8x25to12x22() {
+    let a12x22 = Array.from({ length: 12 }, () =>
+      Array.from({ length: 22 }, () => [0, 0, 0])
+    );
+
+    for (let i = 0; i < 12; i++) {
+      const srcRow = Math.floor(i * (8 / 12));
+      for (let j = 0; j < 22; j++) {
+        const srcCol = Math.floor(j * (25 / 22));
+        for (let k = 0; k < 3; k++) {
+          a12x22[i][j][k] = a8x25[srcRow][srcCol][k];
+        }
+      }
+    }
+
+    return a12x22;
+  }
+
+  function renderGrid(grid, rows, cols, containerId) {
+    let html = '<table>';
+    for (let j = 0; j < cols; j++) {
+      html += '<tr>';
+      for (let i = 0; i < rows; i++) {
+        const [r, g, b] = grid[i][j];
+        let cls = '';
+        if (r && !g && !b) cls = 'r';
+        else if (!r && g && !b) cls = 'g';
+        else if (!r && !g && b) cls = 'b';
+        else if (r || g || b) cls = 'rgb';
+        html += `<td class="${cls}"></td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</table>';
+    document.getElementById(containerId).innerHTML = html;
+  }
+
+  function generateOutputCode(grid) {
+    let lines = [];
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[0].length; j++) {
+        for (let k = 0; k < 3; k++) {
+          if (grid[i][j][k] !== 0) {
+            lines.push(`a12x22[${i}][${j}][${k}] = ${grid[i][j][k]};`);
+          }
+        }
+      }
+    }
+    return lines.join('\n');
+  }
+
+  function convertAndShow() {
+    const a12x22 = scale8x25to12x22();
+    renderGrid(a12x22, 12, 22, 'grid12x22');
+    document.getElementById('outputCode').value = generateOutputCode(a12x22);
+  }
+
+  function copyCode() {
+    const textarea = document.getElementById('outputCode');
+    textarea.select();
+    document.execCommand('copy');
+    alert('Converted code copied!');
+  }
+</script>
+
+</body>
+</html>
